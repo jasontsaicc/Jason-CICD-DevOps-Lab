@@ -73,12 +73,20 @@ WSGI_APPLICATION = "django_devops_portal.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+
+# 配置 Django資料庫設置，使用 PostgreSQL 作為數據庫引擎。
+# 採用了環境變數的方式來配置參數，方便Django在docker運行，增加部署的靈活性。
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',  # 使用 PostgreSQL 作為數據庫引擎
+        'NAME': os.environ.get("POSTGRES_NAME", "DB2"),  # 資料庫名稱，默認為 "DB2"
+        'USER': os.environ.get("POSTGRES_USER", "postgres"),  # 資料庫用戶名
+        'PASSWORD': os.environ.get("POSTGRES_PASSWORD", "postgres"),  # 資料庫密碼
+        'HOST': os.environ.get("POSTGRES_HOST", "localhost"),  # 主機地址（如 Docker 的 host.docker.internal）
+        'PORT': int(os.environ.get("POSTGRES_PORT", "5432")),  # 連接埠號，默認 PostgreSQL 是 5432
     }
 }
+
 
 
 # Password validation
