@@ -1,0 +1,70 @@
+
+services:
+  web:
+    # image: jasontsaic/django_devops_portal
+    container_name: django_devops_web
+    env_file: .env
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DJANGO_LOG_LEVEL=DEBUG
+      - ENV=local
+      - POSTGRES_NAME=DB2
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASS=postgres
+      - POSTGRES_HOST=django_devops_postgresdb
+      - POSTGRES_PORT=5432  
+    command: >
+      /bin/sh -c "python manage.py makemigrations &&
+                  python manage.py migrate &&
+                  python manage.py runserver 0.0.0.0:8585"   
+    ports:
+      - "8585:8585"
+    networks:
+      - web_network
+    volumes:
+       - appdata:/app
+    depends_on:
+      - django_devops_postgresdb
+      - redis 
+
+
+  redis:
+      image: "redis:alpine"
+      container_name: django_devops_redis
+      ports:
+        - '6379:6379' 
+      volumes:
+          - redisDB:/data
+      networks:
+            - web_network
+
+  django_devops_postgresdb:
+    restart: always
+    image: postgres:latest
+    container_name: django_devops_postgresdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=DB2
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PORT=5432
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
+    ports:
+       - "5432:5432"
+    networks:
+          - web_network 
+
+
+networks:
+  web_network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisDB:
+  appdata:
+    driver: local
