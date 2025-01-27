@@ -1,7 +1,7 @@
 
 services:
-  web:
-    # image: jasontsaic/django_devops_portal
+  django_devops_web:
+    image: jasontsaic/django_devops_portal
     container_name: django_devops_web
     env_file: .env
     restart: always
@@ -19,19 +19,21 @@ services:
     command: >
       /bin/sh -c "python manage.py makemigrations &&
                   python manage.py migrate &&
-                  python manage.py runserver 0.0.0.0:8585"   
+                  python manage.py runserver 0.0.0.0:8058"   
     ports:
-      - "8585:8585"
+      - "8058:8058"
     networks:
       - web_network
     volumes:
        - appdata:/app
     depends_on:
-      - django_devops_postgresdb
-      - redis 
+      django_devops_postgresdb:
+        condition: service_healthy
+      django_devops_redis:
+        condition: service_healthy
 
 
-  redis:
+  django_devops_redis:
       image: "redis:alpine"
       container_name: django_devops_redis
       ports:
@@ -40,6 +42,11 @@ services:
           - redisDB:/data
       networks:
             - web_network
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
 
   django_devops_postgresdb:
     restart: always
@@ -57,6 +64,11 @@ services:
        - "5432:5432"
     networks:
           - web_network 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 
 networks:
